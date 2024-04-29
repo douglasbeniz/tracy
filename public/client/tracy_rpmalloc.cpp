@@ -221,19 +221,19 @@ extern int madvise(caddr_t, size_t, int);
 
 #include <atomic>
 
-typedef std::atomic<int32_t> atomic32_t;
-typedef std::atomic<int64_t> atomic64_t;
+typedef std::atomic<int32_t> atomic32tracy_t;
+typedef std::atomic<int64_t> atomic64tracy_t;
 typedef std::atomic<void*> atomicptr_t;
 
-static FORCEINLINE int32_t atomic_load32(atomic32_t* src) { return std::atomic_load_explicit(src, std::memory_order_relaxed); }
-static FORCEINLINE void    atomic_store32(atomic32_t* dst, int32_t val) { std::atomic_store_explicit(dst, val, std::memory_order_relaxed); }
-static FORCEINLINE int32_t atomic_incr32(atomic32_t* val) { return std::atomic_fetch_add_explicit(val, 1, std::memory_order_relaxed) + 1; }
-static FORCEINLINE int32_t atomic_decr32(atomic32_t* val) { return std::atomic_fetch_add_explicit(val, -1, std::memory_order_relaxed) - 1; }
-static FORCEINLINE int32_t atomic_add32(atomic32_t* val, int32_t add) { return std::atomic_fetch_add_explicit(val, add, std::memory_order_relaxed) + add; }
-static FORCEINLINE int     atomic_cas32_acquire(atomic32_t* dst, int32_t val, int32_t ref) { return std::atomic_compare_exchange_weak_explicit(dst, &ref, val, std::memory_order_acquire, std::memory_order_relaxed); }
-static FORCEINLINE void    atomic_store32_release(atomic32_t* dst, int32_t val) { std::atomic_store_explicit(dst, val, std::memory_order_release); }
-static FORCEINLINE int64_t atomic_load64(atomic64_t* val) { return std::atomic_load_explicit(val, std::memory_order_relaxed); }
-static FORCEINLINE int64_t atomic_add64(atomic64_t* val, int64_t add) { return std::atomic_fetch_add_explicit(val, add, std::memory_order_relaxed) + add; }
+static FORCEINLINE int32_t atomic_load32(atomic32tracy_t* src) { return std::atomic_load_explicit(src, std::memory_order_relaxed); }
+static FORCEINLINE void    atomic_store32(atomic32tracy_t* dst, int32_t val) { std::atomic_store_explicit(dst, val, std::memory_order_relaxed); }
+static FORCEINLINE int32_t atomic_incr32(atomic32tracy_t* val) { return std::atomic_fetch_add_explicit(val, 1, std::memory_order_relaxed) + 1; }
+static FORCEINLINE int32_t atomic_decr32(atomic32tracy_t* val) { return std::atomic_fetch_add_explicit(val, -1, std::memory_order_relaxed) - 1; }
+static FORCEINLINE int32_t atomic_add32(atomic32tracy_t* val, int32_t add) { return std::atomic_fetch_add_explicit(val, add, std::memory_order_relaxed) + add; }
+static FORCEINLINE int     atomic_cas32_acquire(atomic32tracy_t* dst, int32_t val, int32_t ref) { return std::atomic_compare_exchange_weak_explicit(dst, &ref, val, std::memory_order_acquire, std::memory_order_relaxed); }
+static FORCEINLINE void    atomic_store32_release(atomic32tracy_t* dst, int32_t val) { std::atomic_store_explicit(dst, val, std::memory_order_release); }
+static FORCEINLINE int64_t atomic_load64(atomic64tracy_t* val) { return std::atomic_load_explicit(val, std::memory_order_relaxed); }
+static FORCEINLINE int64_t atomic_add64(atomic64tracy_t* val, int64_t add) { return std::atomic_fetch_add_explicit(val, add, std::memory_order_relaxed) + add; }
 static FORCEINLINE void*   atomic_load_ptr(atomicptr_t* src) { return std::atomic_load_explicit(src, std::memory_order_relaxed); }
 static FORCEINLINE void    atomic_store_ptr(atomicptr_t* dst, void* val) { std::atomic_store_explicit(dst, val, std::memory_order_relaxed); }
 static FORCEINLINE void    atomic_store_ptr_release(atomicptr_t* dst, void* val) { std::atomic_store_explicit(dst, val, std::memory_order_release); }
@@ -375,26 +375,26 @@ typedef struct global_cache_t global_cache_t;
 #if ENABLE_ADAPTIVE_THREAD_CACHE || ENABLE_STATISTICS
 struct span_use_t {
 	//! Current number of spans used (actually used, not in cache)
-	atomic32_t current;
+	atomic32tracy_t current;
 	//! High water mark of spans used
-	atomic32_t high;
+	atomic32tracy_t high;
 #if ENABLE_STATISTICS
 	//! Number of spans in deferred list
-	atomic32_t spans_deferred;
+	atomic32tracy_t spans_deferred;
 	//! Number of spans transitioned to global cache
-	atomic32_t spans_to_global;
+	atomic32tracy_t spans_to_global;
 	//! Number of spans transitioned from global cache
-	atomic32_t spans_from_global;
+	atomic32tracy_t spans_from_global;
 	//! Number of spans transitioned to thread cache
-	atomic32_t spans_to_cache;
+	atomic32tracy_t spans_to_cache;
 	//! Number of spans transitioned from thread cache
-	atomic32_t spans_from_cache;
+	atomic32tracy_t spans_from_cache;
 	//! Number of spans transitioned to reserved state
-	atomic32_t spans_to_reserved;
+	atomic32tracy_t spans_to_reserved;
 	//! Number of spans transitioned from reserved state
-	atomic32_t spans_from_reserved;
+	atomic32tracy_t spans_from_reserved;
 	//! Number of raw memory map calls
-	atomic32_t spans_map_calls;
+	atomic32tracy_t spans_map_calls;
 #endif
 };
 typedef struct span_use_t span_use_t;
@@ -403,25 +403,25 @@ typedef struct span_use_t span_use_t;
 #if ENABLE_STATISTICS
 struct size_class_use_t {
 	//! Current number of allocations
-	atomic32_t alloc_current;
+	atomic32tracy_t alloc_current;
 	//! Peak number of allocations
 	int32_t alloc_peak;
 	//! Total number of allocations
-	atomic32_t alloc_total;
+	atomic32tracy_t alloc_total;
 	//! Total number of frees
-	atomic32_t free_total;
+	atomic32tracy_t free_total;
 	//! Number of spans in use
-	atomic32_t spans_current;
+	atomic32tracy_t spans_current;
 	//! Number of spans transitioned to cache
 	int32_t spans_peak;
 	//! Number of spans transitioned to cache
-	atomic32_t spans_to_cache;
+	atomic32tracy_t spans_to_cache;
 	//! Number of spans transitioned from cache
-	atomic32_t spans_from_cache;
+	atomic32tracy_t spans_from_cache;
 	//! Number of spans transitioned from reserved state
-	atomic32_t spans_from_reserved;
+	atomic32tracy_t spans_from_reserved;
 	//! Number of spans mapped
-	atomic32_t spans_map_calls;
+	atomic32tracy_t spans_map_calls;
 	int32_t unused;
 };
 typedef struct size_class_use_t size_class_use_t;
@@ -461,7 +461,7 @@ struct span_t {
 	//! Offset from master span for subspans
 	uint32_t    offset_from_master;
 	//! Remaining span counter, for master spans
-	atomic32_t  remaining_spans;
+	atomic32tracy_t  remaining_spans;
 	//! Alignment offset
 	uint32_t    align_offset;
 	//! Owning heap
@@ -517,7 +517,7 @@ struct heap_t {
 	//! Number of mapped but unused spans
 	uint32_t     spans_reserved;
 	//! Child count
-	atomic32_t   child_count;
+	atomic32tracy_t   child_count;
 	//! Next heap in id list
 	heap_t*      next_heap;
 	//! Next heap in orphan list
@@ -547,9 +547,9 @@ struct heap_t {
 	//! Allocation stats per size class
 	size_class_use_t size_class_use[SIZE_CLASS_COUNT + 1];
 	//! Number of bytes transitioned thread -> global
-	atomic64_t   thread_to_global;
+	atomic64tracy_t   thread_to_global;
 	//! Number of bytes transitioned global -> thread
-	atomic64_t   global_to_thread;
+	atomic64tracy_t   global_to_thread;
 #endif
 };
 
@@ -566,7 +566,7 @@ static_assert(sizeof(size_class_t) == 8, "Size class size mismatch");
 
 struct global_cache_t {
 	//! Cache lock
-	atomic32_t lock;
+	atomic32tracy_t lock;
 	//! Cache count
 	uint32_t count;
 #if ENABLE_STATISTICS
@@ -626,7 +626,7 @@ static size_class_t _memory_size_class[SIZE_CLASS_COUNT];
 //! Run-time size limit of medium blocks
 static size_t _memory_medium_size_limit;
 //! Heap ID counter
-static atomic32_t _memory_heap_id;
+static atomic32tracy_t _memory_heap_id;
 //! Huge page support
 static int _memory_huge_pages;
 #if ENABLE_GLOBAL_CACHE
@@ -642,7 +642,7 @@ static span_t* _memory_global_reserve_master;
 //! All heaps
 static heap_t* _memory_heaps[HEAP_ARRAY_SIZE];
 //! Used to restrict access to mapping memory for huge pages
-static atomic32_t _memory_global_lock;
+static atomic32tracy_t _memory_global_lock;
 //! Orphaned heaps
 static heap_t* _memory_orphan_heaps;
 #if RPMALLOC_FIRST_CLASS_HEAPS
@@ -651,27 +651,27 @@ static heap_t* _memory_first_class_orphan_heaps;
 #endif
 #if ENABLE_STATISTICS
 //! Allocations counter
-static atomic64_t _allocation_counter;
+static atomic64tracy_t _allocation_counter;
 //! Deallocations counter
-static atomic64_t _deallocation_counter;
+static atomic64tracy_t _deallocation_counter;
 //! Active heap count
-static atomic32_t _memory_active_heaps;
+static atomic32tracy_t _memory_active_heaps;
 //! Number of currently mapped memory pages
-static atomic32_t _mapped_pages;
+static atomic32tracy_t _mapped_pages;
 //! Peak number of concurrently mapped memory pages
 static int32_t _mapped_pages_peak;
 //! Number of mapped master spans
-static atomic32_t _master_spans;
+static atomic32tracy_t _master_spans;
 //! Number of unmapped dangling master spans
-static atomic32_t _unmapped_master_spans;
+static atomic32tracy_t _unmapped_master_spans;
 //! Running counter of total number of mapped memory pages since start
-static atomic32_t _mapped_total;
+static atomic32tracy_t _mapped_total;
 //! Running counter of total number of unmapped memory pages since start
-static atomic32_t _unmapped_total;
+static atomic32tracy_t _unmapped_total;
 //! Number of currently mapped memory pages in OS calls
-static atomic32_t _mapped_pages_os;
+static atomic32tracy_t _mapped_pages_os;
 //! Number of currently allocated pages in huge allocations
-static atomic32_t _huge_pages_current;
+static atomic32tracy_t _huge_pages_current;
 //! Peak number of currently allocated pages in huge allocations
 static int32_t _huge_pages_peak;
 #endif

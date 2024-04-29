@@ -219,6 +219,11 @@ TRACY_API void SetThreadName( const char* name )
 TRACY_API const char* GetThreadName( uint32_t id )
 {
     static char buf[256];
+
+#if defined __VXWORKS__
+    return taskName((TASK_ID)id);
+#endif
+
 #ifdef TRACY_ENABLE
     auto ptr = GetThreadNameData().load( std::memory_order_relaxed );
     while( ptr )

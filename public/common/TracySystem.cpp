@@ -86,6 +86,10 @@ TRACY_API uint32_t GetThreadHandleImpl()
 #elif defined __EMSCRIPTEN__
     // Not supported, but let it compile.
     return 0;
+#elif defined __VXWORKS__
+    // Using taskID instead of:
+    //    (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
+    return uint32_t(taskIdSelf());
 #else
     // To add support for a platform, retrieve and return the kernel thread identifier here.
     //

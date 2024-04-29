@@ -699,7 +699,11 @@ static pthread_key_t _memory_thread_heap;
 #      define _Thread_local __thread
 #    endif
 #  endif
-static _Thread_local heap_t* _memory_thread_heap TLS_MODEL;
+#  ifdef __VXWORKS__
+	static __thread heap_t* _memory_thread_heap TLS_MODEL;
+#  else
+	static _Thread_local heap_t* _memory_thread_heap TLS_MODEL;
+#  endif
 #endif
 
 static inline heap_t*

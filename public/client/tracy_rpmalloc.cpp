@@ -976,8 +976,11 @@ _rpmalloc_unmap_os(void* address, size_t size, size_t offset, size_t release) {
 		if (madvise(address, size, MADV_PAGEOUT)) {
 #elif defined(MADV_FREE)
 		if (madvise(address, size, MADV_FREE)) {
-#else
+#elif defined(POSIX_MADV_DONTNEED)
 		if (posix_madvise(address, size, POSIX_MADV_DONTNEED)) {
+#else
+		if (0 == 1) {
+			// forcing and error to be logged
 #endif
 			rpmalloc_assert(0, "Failed to madvise virtual memory block as free");
 		}

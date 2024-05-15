@@ -36,6 +36,11 @@
 #ifdef __MINGW32__
 #  define __STDC_FORMAT_MACROS
 #endif
+
+#ifdef __VXWORKS__
+#  include <taskLib.h>
+#endif
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>

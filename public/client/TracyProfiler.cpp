@@ -413,7 +413,7 @@ static const char* GetProcessName()
 #  endif
 #elif defined __linux__ && defined _GNU_SOURCE
     if( program_invocation_short_name ) processName = program_invocation_short_name;
-#elif defined __APPLE__ || defined BSD
+#elif defined __APPLE__ || defined BSD || defined __VXWORKS__
     auto buf = getprogname();
     if( buf ) processName = buf;
 #elif defined __QNX__

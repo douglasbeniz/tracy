@@ -54,9 +54,10 @@
 #endif
 
 #ifdef __VXWORKS__
-#  include <vxWorks.h>
-#  include <sysLib.h>
 #  include <version.h>
+#  include <sysLib.h>
+#  include <vxCpuLib.h>
+#  include <vxWorks.h>
 #endif
 
 #include <algorithm>
@@ -755,7 +756,8 @@ static const char* GetHostInfo()
     UINT64          memSize;        /* memory size in bytes */
     unsigned long   nMBytes;        /* memory size in megabytes */
 
-    memSize = sysMemSizeGet();
+    //memSize = sysMemSizeGet();            // kernel space, not acessible in user space
+    memSize = 0;
     nMBytes = (unsigned long)(memSize >> 20);
 
     char cApprox[1]{""};

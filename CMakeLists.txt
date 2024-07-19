@@ -5,6 +5,8 @@ include(cmake/version.cmake)
 
 project(Tracy LANGUAGES CXX VERSION ${TRACY_VERSION_STRING})
 
+file(GENERATE OUTPUT .gitignore CONTENT "*")
+
 if(${BUILD_SHARED_LIBS})
 	set(DEFAULT_STATIC OFF)
 else()
@@ -83,6 +85,10 @@ set_option(TRACY_LIBUNWIND_BACKTRACE "Use libunwind backtracing where supported"
 set_option(TRACY_SYMBOL_OFFLINE_RESOLVE "Instead of full runtime symbol resolution, only resolve the image path and offset to enable offline symbol resolution" OFF)
 set_option(TRACY_LIBBACKTRACE_ELF_DYNLOAD_SUPPORT "Enable libbacktrace to support dynamically loaded elfs in symbol resolution resolution after the first symbol resolve operation" OFF)
 
+# advanced
+set_option(TRACY_DEMANGLE "[advanced] Don't use default demangling function - You'll need to provide your own" OFF)
+mark_as_advanced(TRACY_DEMANGLE)
+
 if(NOT TRACY_STATIC)
     target_compile_definitions(TracyClient PRIVATE TRACY_EXPORTS)
     target_compile_definitions(TracyClient PUBLIC TRACY_IMPORTS)
@@ -107,6 +113,7 @@ set(client_includes
     ${TRACY_PUBLIC_DIR}/client/tracy_concurrentqueue.h
     ${TRACY_PUBLIC_DIR}/client/tracy_rpmalloc.hpp
     ${TRACY_PUBLIC_DIR}/client/tracy_SPSCQueue.h
+    ${TRACY_PUBLIC_DIR}/client/TracyKCore.hpp
     ${TRACY_PUBLIC_DIR}/client/TracyArmCpuTable.hpp
     ${TRACY_PUBLIC_DIR}/client/TracyCallstack.h
     ${TRACY_PUBLIC_DIR}/client/TracyCallstack.hpp

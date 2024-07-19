@@ -53,6 +53,12 @@
 #  include <sys/stat.h>
 #endif
 
+#ifdef __VXWORKS__
+#  include <vxWorks.h>
+#  include <sysLib.h>
+#  include <version.h>
+#endif
+
 #include <algorithm>
 #include <assert.h>
 #include <atomic>
@@ -550,6 +556,8 @@ static const char* GetHostInfo()
     ptr += sprintf( ptr, "OS: BSD (OpenBSD)\n" );
 #elif defined __QNX__
     ptr += sprintf( ptr, "OS: QNX\n" );
+#elif defined __VXWORKS__
+    ptr += sprintf(ptr, "OS: %s\n", VXWORKS_VERSION);
 #else
     ptr += sprintf( ptr, "OS: unknown\n" );
 #endif
@@ -697,7 +705,13 @@ static const char* GetHostInfo()
     ptr += sprintf( ptr, "Device: %s %s\n", deviceManufacturer, deviceModel );
 #endif
 
+#ifdef __VXWORKS__
+    //ptr += sprintf(ptr, "CPU cores: %i\n", itlSysCpuAvailableGet());
+    const unsigned int cNumOfCores = vxCpuConfiguredGet();
+    ptr += sprintf(ptr, "CPU cores: %i\n", cNumOfCores);
+#else
     ptr += sprintf( ptr, "CPU cores: %i\n", std::thread::hardware_concurrency() );
+#endif
 
 #if defined _WIN32
     MEMORYSTATUSEX statex;
@@ -737,6 +751,27 @@ static const char* GetHostInfo()
     }
     memSize = memSize / 1024 / 1024;
     ptr += sprintf( ptr, "RAM: %llu MB\n", memSize);
+#elif defined __VXWORKS__
+    UINT64          memSize;        /* memory size in bytes */
+    unsigned long   nMBytes;        /* memory size in megabytes */
+
+    memSize = sysMemSizeGet();
+    nMBytes = (unsigned long)(memSize >> 20);
+
+    char cApprox[1]{""};
+
+    printf("Tracy :: OS Memory Size: ");
+    if (nMBytes > 0)
+    {
+      if ((UINT32)memSize & 0xFFFFF) /* exact multiple of 1MB? */
+      {
+        printf("~");
+        memcpy(cApprox, "~", 1);
+      }
+      printf("%luMB", nMBytes);
+    }
+    printf("\n");
+    ptr += sprintf(ptr, "RAM: %s%llu MB\n", cApprox, memSize);
 #else
     ptr += sprintf( ptr, "RAM: unknown\n" );
 #endif

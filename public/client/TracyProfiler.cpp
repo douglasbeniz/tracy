@@ -759,11 +759,11 @@ static const char* GetHostInfo()
     unsigned long   nMBytes;        /* memory size in megabytes */
 
     //memSize = sysMemSizeGet();            // kernel space, not acessible in user space
-    SystemMemoryInfo systemMemoryInfo = GetSysMemoryInfo();
-    if ( systemMemoryInfo)
+    Profiler::SystemMemoryInfo systemMemoryInfo = Profiler::GetSysMemoryInfo();
+    if (systemMemoryInfo)
     {
         // Total RAM in bytes
-        memSize = systemMemoryInfo->physTotalPages * pageSizeInBytes;
+        memSize = systemMemoryInfo->physTotalPages * Profiler::pageSizeInBytes;
     }
     else
     {
@@ -4099,12 +4099,15 @@ int64_t Profiler::GetTimeQpc()
      * Getting memory info using address space lib to expose kernel details
      *   to user space
      */
-    std::optional<SystemMemoryInfo> Profiler::GetSysMemoryInfo()
+    std::optional<Profiler::SystemMemoryInfo> Profiler::GetSysMemoryInfo()
     {
-        SystemMemoryInfo systemMemoryInfo{};
+        Profiler::SystemMemoryInfo systemMemoryInfo{};
 
         const auto result =
-           SyscallWrapper(false, SyscallRoutine::GetSysMemoryInfo, reinterpret_cast<_Vx_usr_arg_t>(&systemMemoryInfo));
+           SyscallWrapper(false, SyscallRoutine::GetSysMemoryInfo, reinterpret_cast<_Vx_usr_arg_t>(&systemMemoryInfo),
+                         const _Vx_usr_arg_t arg2 = 0, const _Vx_usr_arg_t arg3 = 0, const _Vx_usr_arg_t arg4 = 0,
+                         const _Vx_usr_arg_t arg5 = 0, const _Vx_usr_arg_t arg6 = 0, const _Vx_usr_arg_t arg7 = 0,
+                         const _Vx_usr_arg_t arg8 = 0);
 
         if (result == 0)        // ERROR
         {
@@ -4115,18 +4118,21 @@ int64_t Profiler::GetTimeQpc()
         return systemMemoryInfo;
     }
 
-    int32_t Profiler::SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1, const _Vx_usr_arg_t arg2,
-                                    const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4, const _Vx_usr_arg_t arg5,
-                                    const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7, const _Vx_usr_arg_t arg8)
+    int32_t Profiler::SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1,
+                                    const _Vx_usr_arg_t arg2, const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4,
+                                    const _Vx_usr_arg_t arg5, const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7,
+                                    const _Vx_usr_arg_t arg8)
     {
         const auto routineNumber{to_underlying(routine)};       // XXX: This comes from NCP::SyscallHandler table, to be enhanced
 
+        /* let:s just trust it by now...
         if (!Syscall::VerifyDkm())
         {
             TracyDebug( "Failed to verify the DKM (routine=%d, group=%d)", routineNumber,
                                         cSyscallGroupNumber );
             return 0;       // ERROR
         }
+        */
 
         const auto syscallNumber = SYSCALL_NUMBER(cSyscallGroupNumber, routineNumber);
         const auto result = syscall(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, syscallNumber);

@@ -54,8 +54,11 @@
 #endif
 
 #ifdef __VXWORKS__
+#  include <errnoLib.h>          // errnoGet()
 #  include <version.h>
+#  include <syscall.h>           // syscall macros SYSCALL_NUMBER etc.
 #  include <sysLib.h>
+#  include <sys/syscall.h>       // syscall()
 #  include <vxCpuLib.h>
 #  include <vxWorks.h>
 #endif
@@ -707,7 +710,6 @@ static const char* GetHostInfo()
 #endif
 
 #ifdef __VXWORKS__
-    //ptr += sprintf(ptr, "CPU cores: %i\n", itlSysCpuAvailableGet());
     const unsigned int cNumOfCores = vxCpuConfiguredGet();
     ptr += sprintf(ptr, "CPU cores: %i\n", cNumOfCores);
 #else
@@ -757,7 +759,16 @@ static const char* GetHostInfo()
     unsigned long   nMBytes;        /* memory size in megabytes */
 
     //memSize = sysMemSizeGet();            // kernel space, not acessible in user space
-    memSize = 0;
+    SystemMemoryInfo systemMemoryInfo = GetSysMemoryInfo();
+    if ( systemMemoryInfo)
+    {
+        // Total RAM in bytes
+        memSize = systemMemoryInfo->physTotalPages * pageSizeInBytes;
+    }
+    else
+    {
+        memSize = 0;
+    }
     nMBytes = (unsigned long)(memSize >> 20);
 
     char cApprox[1]{""};
@@ -4081,6 +4092,53 @@ int64_t Profiler::GetTimeQpc()
     QueryPerformanceCounter( &t );
     return t.QuadPart;
 }
+#endif
+
+#if defined __VXWORKS__
+    /*
+     * Getting memory info using address space lib to expose kernel details
+     *   to user space
+     */
+    std::optional<SystemMemoryInfo> Profiler::GetSysMemoryInfo()
+    {
+        SystemMemoryInfo systemMemoryInfo{};
+
+        const auto result =
+           SyscallWrapper(false, SyscallRoutine::GetSysMemoryInfo, reinterpret_cast<_Vx_usr_arg_t>(&systemMemoryInfo));
+
+        if (result == 0)        // ERROR
+        {
+            TracyDebug( "DebugInfo VxWorks syscall failed.\n" );
+            return std::nullopt;
+        }
+
+        return systemMemoryInfo;
+    }
+
+    int32_t Profiler::SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1, const _Vx_usr_arg_t arg2,
+                                    const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4, const _Vx_usr_arg_t arg5,
+                                    const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7, const _Vx_usr_arg_t arg8)
+    {
+        const auto routineNumber{to_underlying(routine)};       // XXX: This comes from NCP::SyscallHandler table, to be enhanced
+
+        if (!Syscall::VerifyDkm())
+        {
+            TracyDebug( "Failed to verify the DKM (routine=%d, group=%d)", routineNumber,
+                                        cSyscallGroupNumber );
+            return 0;       // ERROR
+        }
+
+        const auto syscallNumber = SYSCALL_NUMBER(cSyscallGroupNumber, routineNumber);
+        const auto result = syscall(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, syscallNumber);
+        if (result == 0 && doLog)      // ERROR
+        {
+            const auto e = errnoGet();
+            TracyDebug( "Syscall failed (routine=%d, group=%d)! errno: %d (%s)\n", routineNumber,
+                                        cSyscallGroupNumber, e, strerror(e) );
+            return 0;       // ERROR
+        }
+        return result;
+    }
 #endif
 
 }

@@ -783,6 +783,81 @@ public:
         }
         return uint64_t( ptr );
     }
+#if defined __VXWORKS__
+    // Private methods used by VxWorks
+    static constexpr uint32_t  pageSizeInBytes{4096U};
+    static constexpr int32_t   cSyscallGroupNumber{SCG_USER1};
+
+    struct SystemMemoryInfo
+    {
+        size_t physAllocUnit;    /* physical space allocation unit */
+        size_t physTotalPages;   /* total system RAM physical pages*/
+        size_t physFreePages;    /* unmapped system RAM physical pages */
+        size_t physMaxSize;      /* largest unmapped RAM block */
+        size_t physContigPages;  /* largest unmapped RAM block in pages */
+        size_t kernelAllocUnit;  /* kernel region allocation unit */
+        size_t kernelTotalPages; /* kernel region total pages */
+        size_t kernelFreePages;  /* kernel region unmapped pages */
+        size_t kernelMaxSize;    /* largest unmapped blk in kernel rgn */
+        size_t userAllocUnit;    /* user region allocation unit */
+        size_t userTotalPages;   /* user region total pages */
+        size_t userFreePages;    /* user region unmapped pages */
+        size_t userMaxSize;      /* largest unmapped blk in user rgn */
+    };
+
+    // XXX: This comes from NCP::SyscallHandler table, to be enhanced because
+    //        it will fail in the case of NCP modification
+    enum class SyscallRoutine : int32_t
+    {
+        function0,
+        function1,
+        function2,
+        function3,
+        function4,
+        function5,
+        function6,
+        function7,
+        function8,
+        function9,
+        function10,
+        function11,
+        function12,
+        GetSysMemoryInfo,
+        function14,
+        function15,
+        function16,
+        function17,
+        function18,
+        function19,
+        function20,
+        function21,
+        function22,
+        function23,
+        function24,
+        function25,
+        function26,
+        function27,
+        function28,
+        function29,
+        function30,
+        function31,
+        function32,
+        function33,
+        function34
+    };
+
+    template <typename E>
+    constexpr auto to_underlying(E e) noexcept
+    {
+        return static_cast<std::underlying_type_t<E>>(e);
+    }
+
+    std::optional<SystemMemoryInfo> GetSysMemoryInfo();
+
+    int32_t SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1, const _Vx_usr_arg_t arg2,
+                           const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4, const _Vx_usr_arg_t arg5,
+                           const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7, const _Vx_usr_arg_t arg8);
+#endif
 
 private:
     enum class DequeueStatus { DataDequeued, ConnectionLost, QueueEmpty };
@@ -922,82 +997,6 @@ private:
 
 #if defined _WIN32 && defined TRACY_TIMER_QPC
     static int64_t GetTimeQpc();
-#endif
-
-#if defined __VXWORKS__
-    // Private methods used by VxWorks
-    static constexpr uint32_t  pageSizeInBytes{4096U};
-    static constexpr int32_t   cSyscallGroupNumber{SCG_USER1};
-
-    struct SystemMemoryInfo
-    {
-        size_t physAllocUnit;    /* physical space allocation unit */
-        size_t physTotalPages;   /* total system RAM physical pages*/
-        size_t physFreePages;    /* unmapped system RAM physical pages */
-        size_t physMaxSize;      /* largest unmapped RAM block */
-        size_t physContigPages;  /* largest unmapped RAM block in pages */
-        size_t kernelAllocUnit;  /* kernel region allocation unit */
-        size_t kernelTotalPages; /* kernel region total pages */
-        size_t kernelFreePages;  /* kernel region unmapped pages */
-        size_t kernelMaxSize;    /* largest unmapped blk in kernel rgn */
-        size_t userAllocUnit;    /* user region allocation unit */
-        size_t userTotalPages;   /* user region total pages */
-        size_t userFreePages;    /* user region unmapped pages */
-        size_t userMaxSize;      /* largest unmapped blk in user rgn */
-    };
-
-    // XXX: This comes from NCP::SyscallHandler table, to be enhanced because
-    //        it will fail in the case of NCP modification
-    enum class SyscallRoutine : int32_t
-    {
-        function0,
-        function1,
-        function2,
-        function3,
-        function4,
-        function5,
-        function6,
-        function7,
-        function8,
-        function9,
-        function10,
-        function11,
-        function12,
-        GetSysMemoryInfo,
-        function14,
-        function15,
-        function16,
-        function17,
-        function18,
-        function19,
-        function20,
-        function21,
-        function22,
-        function23,
-        function24,
-        function25,
-        function26,
-        function27,
-        function28,
-        function29,
-        function30,
-        function31,
-        function32,
-        function33,
-        function34
-    };
-
-    template <typename E>
-    constexpr auto to_underlying(E e) noexcept
-    {
-        return static_cast<std::underlying_type_t<E>>(e);
-    }
-
-    std::optional<SystemMemoryInfo> GetSysMemoryInfo();
-
-    int32_t SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1, const _Vx_usr_arg_t arg2,
-                           const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4, const _Vx_usr_arg_t arg5,
-                           const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7, const _Vx_usr_arg_t arg8);
 #endif
 
     double m_timerMul;

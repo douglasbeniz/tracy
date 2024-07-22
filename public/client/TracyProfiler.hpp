@@ -49,6 +49,7 @@
 
 #ifdef __VXWORKS__
 #  include <type_traits>
+#  include <syscall.h>           // syscall macros SYSCALL_NUMBER etc.
 #endif
 
 namespace tracy

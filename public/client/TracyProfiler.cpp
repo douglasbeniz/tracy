@@ -760,7 +760,7 @@ static const char* GetHostInfo()
 
     //memSize = sysMemSizeGet();            // kernel space, not acessible in user space
     Profiler::SystemMemoryInfo systemMemoryInfo = Profiler::GetSysMemoryInfo();
-    if (systemMemoryInfo != std::nullopt)
+    if (systemMemoryInfo)
     {
         // Total RAM in bytes
         memSize = systemMemoryInfo.physTotalPages * Profiler::pageSizeInBytes;
@@ -4099,7 +4099,7 @@ int64_t Profiler::GetTimeQpc()
      * Getting memory info using address space lib to expose kernel details
      *   to user space
      */
-    std::optional<Profiler::SystemMemoryInfo> Profiler::GetSysMemoryInfo()
+    Profiler::SystemMemoryInfo Profiler::GetSysMemoryInfo()
     {
         Profiler::SystemMemoryInfo systemMemoryInfo{};
 
@@ -4109,7 +4109,7 @@ int64_t Profiler::GetTimeQpc()
         if (result == 0)        // ERROR
         {
             TracyDebug( "DebugInfo VxWorks syscall failed.\n" );
-            return std::nullopt;
+            return nullptr;
         }
 
         return systemMemoryInfo;

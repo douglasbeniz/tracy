@@ -760,10 +760,10 @@ static const char* GetHostInfo()
 
     //memSize = sysMemSizeGet();            // kernel space, not acessible in user space
     Profiler::SystemMemoryInfo systemMemoryInfo = Profiler::GetSysMemoryInfo();
-    if (systemMemoryInfo)
+    if (systemMemoryInfo != std::nullopt)
     {
         // Total RAM in bytes
-        memSize = systemMemoryInfo->physTotalPages * Profiler::pageSizeInBytes;
+        memSize = systemMemoryInfo.physTotalPages * Profiler::pageSizeInBytes;
     }
     else
     {

@@ -846,16 +846,16 @@ public:
     };
 
     template <typename E>
-    constexpr auto to_underlying(E e) noexcept
+    static constexpr auto to_underlying(E e) noexcept
     {
         return static_cast<std::underlying_type_t<E>>(e);
     }
 
     static SystemMemoryInfo GetSysMemoryInfo();
 
-    static int32_t SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1, const _Vx_usr_arg_t arg2,
-                           const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4, const _Vx_usr_arg_t arg5,
-                           const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7, const _Vx_usr_arg_t arg8);
+    static int32_t SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1 = 0, const _Vx_usr_arg_t arg2 = 0,
+                           const _Vx_usr_arg_t arg3 = 0, const _Vx_usr_arg_t arg4 = 0, const _Vx_usr_arg_t arg5 = 0,
+                           const _Vx_usr_arg_t arg6 = 0, const _Vx_usr_arg_t arg7 = 0, const _Vx_usr_arg_t arg8 = 0);
 #endif
 
 private:

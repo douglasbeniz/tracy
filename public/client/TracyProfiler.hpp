@@ -47,6 +47,11 @@
 #  define TracyConcatIndirect(x,y) x##y
 #endif
 
+#ifdef __VXWORKS__
+#  include <type_traits>
+#  include <optional>
+#endif
+
 namespace tracy
 {
 #if defined(TRACY_DELAYED_INIT) && defined(TRACY_MANUAL_LIFETIME)
@@ -920,9 +925,6 @@ private:
 #endif
 
 #if defined __VXWORKS__
-    #include <type_traits>
-    #include <optional>
-
     // Private methods used by VxWorks
     static constexpr uint32_t  pageSizeInBytes{4096U};
     static constexpr int32_t   cSyscallGroupNumber{SCG_USER1};

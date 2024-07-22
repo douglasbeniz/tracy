@@ -49,7 +49,6 @@
 
 #ifdef __VXWORKS__
 #  include <type_traits>
-#  include <optional>
 #endif
 
 namespace tracy
@@ -852,7 +851,7 @@ public:
         return static_cast<std::underlying_type_t<E>>(e);
     }
 
-    static std::optional<SystemMemoryInfo> GetSysMemoryInfo();
+    static SystemMemoryInfo GetSysMemoryInfo();
 
     int32_t SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1, const _Vx_usr_arg_t arg2,
                            const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4, const _Vx_usr_arg_t arg5,

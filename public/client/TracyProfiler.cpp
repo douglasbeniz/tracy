@@ -759,16 +759,17 @@ static const char* GetHostInfo()
     unsigned long   nMBytes;        /* memory size in megabytes */
 
     //memSize = sysMemSizeGet();            // kernel space, not acessible in user space
-    Profiler::SystemMemoryInfo systemMemoryInfo = Profiler::GetSysMemoryInfo();
-    if (systemMemoryInfo)
+    try
     {
-        // Total RAM in bytes
-        memSize = systemMemoryInfo.physTotalPages * Profiler::pageSizeInBytes;
+      Profiler::SystemMemoryInfo systemMemoryInfo = Profiler::GetSysMemoryInfo();
+      // Total RAM in bytes
+      memSize = systemMemoryInfo.physTotalPages * Profiler::pageSizeInBytes;
     }
-    else
+    catch (const std::runtime_error& e)
     {
-        memSize = 0;
+      memSize = 0;
     }
+
     nMBytes = (unsigned long)(memSize >> 20);
 
     char cApprox[1]{""};
@@ -4109,7 +4110,8 @@ int64_t Profiler::GetTimeQpc()
         if (result == 0)        // ERROR
         {
             TracyDebug( "DebugInfo VxWorks syscall failed.\n" );
-            return nullptr;
+
+            throw std::runtime_error("VxWorks syscall failed.");
         }
 
         return systemMemoryInfo;

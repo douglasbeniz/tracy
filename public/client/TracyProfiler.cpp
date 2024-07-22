@@ -4117,10 +4117,10 @@ int64_t Profiler::GetTimeQpc()
         return systemMemoryInfo;
     }
 
-    int32_t Profiler::SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1 = 0,
-                                     const _Vx_usr_arg_t arg2 = 0, const _Vx_usr_arg_t arg3 = 0, const _Vx_usr_arg_t arg4 = 0,
-                                     const _Vx_usr_arg_t arg5 = 0, const _Vx_usr_arg_t arg6 = 0, const _Vx_usr_arg_t arg7 = 0,
-                                     const _Vx_usr_arg_t arg8 = 0)
+    int32_t Profiler::SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1,
+                                     const _Vx_usr_arg_t arg2, const _Vx_usr_arg_t arg3, const _Vx_usr_arg_t arg4,
+                                     const _Vx_usr_arg_t arg5, const _Vx_usr_arg_t arg6, const _Vx_usr_arg_t arg7,
+                                     const _Vx_usr_arg_t arg8)
     {
         const auto routineNumber{to_underlying(routine)};       // XXX: This comes from NCP::SyscallHandler table, to be enhanced
 

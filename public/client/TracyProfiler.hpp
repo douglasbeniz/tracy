@@ -921,10 +921,11 @@ private:
 
 #if defined __VXWORKS__
     #include <type_traits>
+    #include <optional>
 
     // Private methods used by VxWorks
-    constexpr uint32_t  pageSizeInBytes{4096U};
-    constexpr int32_t   cSyscallGroupNumber{SCG_USER1};
+    static constexpr uint32_t  pageSizeInBytes{4096U};
+    static constexpr int32_t   cSyscallGroupNumber{SCG_USER1};
 
     struct SystemMemoryInfo
     {

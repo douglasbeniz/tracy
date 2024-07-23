@@ -4105,7 +4105,7 @@ int64_t Profiler::GetTimeQpc()
         Profiler::SystemMemoryInfo systemMemoryInfo{};
 
         const auto result =
-           SyscallWrapper(false, SyscallRoutine::GetSysMemoryInfo, reinterpret_cast<_Vx_usr_arg_t>(&systemMemoryInfo));
+           SyscallWrapper(true, SyscallRoutine::GetSysMemoryInfo, reinterpret_cast<_Vx_usr_arg_t>(&systemMemoryInfo));
 
         if (result == 0)        // ERROR
         {
@@ -4139,10 +4139,10 @@ int64_t Profiler::GetTimeQpc()
         if (result == 0 && doLog)      // ERROR
         {
             const auto e = errnoGet();
-            TracyDebug( "Syscall failed (routine=%d, group=%d)! errno: %d (%s)\n", routineNumber,
-                                        cSyscallGroupNumber, e, strerror(e) );
-            printf("Syscall failed (routine=%d, group=%d)! errno: %d (%s)\n", routineNumber,
-                                        cSyscallGroupNumber, e, strerror(e));
+            TracyDebug( "Syscall failed (routine=%d, group=%d, syscallNumber=%d)! errno: %d (%s)\n", routineNumber,
+                                        cSyscallGroupNumber, syscallNumber, e, strerror(e) );
+            printf("Syscall failed (routine=%d, group=%d, syscallNumber=%d)! errno: %d (%s)\n", routineNumber,
+                                        cSyscallGroupNumber, syscallNumber, e, strerror(e));
             return 0;       // ERROR
         }
         return result;

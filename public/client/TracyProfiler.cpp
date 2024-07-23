@@ -4107,7 +4107,7 @@ int64_t Profiler::GetTimeQpc()
         const auto result =
            SyscallWrapper(true, SyscallRoutine::GetSysMemoryInfo, reinterpret_cast<_Vx_usr_arg_t>(&systemMemoryInfo));
 
-        if (result == 0)        // ERROR
+        if (result == -1)        // ERROR (-1) in VxWorks
         {
             TracyDebug( "DebugInfo VxWorks syscall failed.\n" );
             printf("DebugInfo VxWorks syscall failed.\n");
@@ -4136,7 +4136,7 @@ int64_t Profiler::GetTimeQpc()
 
         const auto syscallNumber = SYSCALL_NUMBER(cSyscallGroupNumber, routineNumber);
         const auto result = syscall(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, syscallNumber);
-        if (result == 0 && doLog)      // ERROR
+        if (result == -1 && doLog)      // ERROR (-1) in VxWorks
         {
             const auto e = errnoGet();
             TracyDebug( "Syscall failed (routine=%d, group=%d, syscallNumber=%d)! errno: %d (%s)\n", routineNumber,

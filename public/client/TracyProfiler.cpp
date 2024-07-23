@@ -772,20 +772,20 @@ static const char* GetHostInfo()
 
     nMBytes = (unsigned long)(memSize >> 20);
 
-    char cApprox[1]{""};
+    char cApprox[2]{""};
 
-    printf("Tracy :: OS Memory Size: ");
+    //printf("Tracy :: OS Memory Size: ");
     if (nMBytes > 0)
     {
       if ((UINT32)memSize & 0xFFFFF) /* exact multiple of 1MB? */
       {
-        printf("~");
-        memcpy(cApprox, "~", 1);
+        //printf("~");
+        memcpy(cApprox, "~\0", 1);
       }
-      printf("%luMB", nMBytes);
+      //printf("%luMB", nMBytes);
     }
-    printf("\n");
-    ptr += sprintf(ptr, "RAM: %s%llu MB\n", cApprox, memSize);
+    //printf("\n");
+    ptr += sprintf(ptr, "RAM: %s%llu MB\n", cApprox, nMBytes);
 #else
     ptr += sprintf( ptr, "RAM: unknown\n" );
 #endif
@@ -4110,7 +4110,7 @@ int64_t Profiler::GetTimeQpc()
         if (result == -1)        // ERROR (-1) in VxWorks
         {
             TracyDebug( "DebugInfo VxWorks syscall failed.\n" );
-            printf("DebugInfo VxWorks syscall failed.\n");
+            //printf("DebugInfo VxWorks syscall failed.\n");
 
             throw std::runtime_error("VxWorks syscall failed.");
         }
@@ -4141,8 +4141,8 @@ int64_t Profiler::GetTimeQpc()
             const auto e = errnoGet();
             TracyDebug( "Syscall failed (routine=%d, group=%d, syscallNumber=%d)! errno: %d (%s)\n", routineNumber,
                                         cSyscallGroupNumber, syscallNumber, e, strerror(e) );
-            printf("Syscall failed (routine=%d, group=%d, syscallNumber=%d)! errno: %d (%s)\n", routineNumber,
-                                        cSyscallGroupNumber, syscallNumber, e, strerror(e));
+            /*printf("Syscall failed (routine=%d, group=%d, syscallNumber=%d)! errno: %d (%s)\n", routineNumber,
+                                        cSyscallGroupNumber, syscallNumber, e, strerror(e));*/
             return 0;       // ERROR
         }
         return result;

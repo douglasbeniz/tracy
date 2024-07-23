@@ -4110,6 +4110,7 @@ int64_t Profiler::GetTimeQpc()
         if (result == 0)        // ERROR
         {
             TracyDebug( "DebugInfo VxWorks syscall failed.\n" );
+            printf("DebugInfo VxWorks syscall failed.\n");
 
             throw std::runtime_error("VxWorks syscall failed.");
         }
@@ -4140,6 +4141,8 @@ int64_t Profiler::GetTimeQpc()
             const auto e = errnoGet();
             TracyDebug( "Syscall failed (routine=%d, group=%d)! errno: %d (%s)\n", routineNumber,
                                         cSyscallGroupNumber, e, strerror(e) );
+            printf("Syscall failed (routine=%d, group=%d)! errno: %d (%s)\n", routineNumber,
+                                        cSyscallGroupNumber, e, strerror(e));
             return 0;       // ERROR
         }
         return result;

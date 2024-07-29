@@ -8,7 +8,7 @@
 #ifndef TRACY_SAMPLING_HZ
 #  if defined _WIN32
 #    define TRACY_SAMPLING_HZ 8000
-#  elif defined __linux__
+#  elif defined __linux__ || defined __VXWORKS__
 #    define TRACY_SAMPLING_HZ 10000
 #  endif
 #endif

@@ -843,7 +843,9 @@ public:
         function31,
         function32,
         function33,
-        function34
+        function34,
+        CtxSwitchProfileStart,
+        CtxSwitchProfileStop
     };
 
     template <typename E>
@@ -853,6 +855,9 @@ public:
     }
 
     static SystemMemoryInfo GetSysMemoryInfo();
+
+    static bool CtxSwitchProfileStart();
+    static bool CtxSwitchProfileStop();
 
     static int32_t SyscallWrapper(bool doLog, const SyscallRoutine routine, const _Vx_usr_arg_t arg1 = 0, const _Vx_usr_arg_t arg2 = 0,
                            const _Vx_usr_arg_t arg3 = 0, const _Vx_usr_arg_t arg4 = 0, const _Vx_usr_arg_t arg5 = 0,

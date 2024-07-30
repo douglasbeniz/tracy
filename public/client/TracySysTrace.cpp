@@ -1599,13 +1599,10 @@ void SysTraceGetExternalName( uint64_t thread, const char*& threadName, const ch
 #  elif defined __VXWORKS__
 // ============================================================================
 // System includes, e.g. STL, Library headers, ...
-#    include <private/eventDefsP.h>
-#    include <private/taskLibP.h>
-#    include <sysLib.h>
-#    include <taskHookLib.h>
+#    include <INcpSystem.h>
+#    include <msgQLib.h>
 #    include <taskLib.h>
-#    include <taskLibCommon.h>
-#    include <vxCpuLib.h>
+#    include <semLib.h>
 #    include <vxWorks.h>
 
 // ============================================================================
@@ -1619,194 +1616,79 @@ void SysTraceGetExternalName( uint64_t thread, const char*& threadName, const ch
 // ============================================================================
 // Definitions
 
-  // Defined in VSB (taskHookLib)
-  extern "C" STATUS taskSwitchHookAdd(FUNCPTR switchHook);
-  extern "C" STATUS taskSwitchHookDelete(FUNCPTR switchHook);
-
-# if (CPU_FAMILY == I80X86)
-    // Defined in VSB (libitl_common)
-    extern "C" uint64_t sysGetTSCCountPerSec();
-# endif
-
   namespace tracy
   {
-    const unsigned int cNumOfCores = vxCpuConfiguredGet();
-
-#  if (CPU_FAMILY == I80X86)
-    const double cTSC_ms = (double)sysGetTSCCountPerSec() / 1000;
-    const double cTSC_us = (double)sysGetTSCCountPerSec() / 1000000;
-
-    inline void vxTimeBaseGet(uint64_t* pTS)
+    inline constexpr const char* const cTracyCtxSwitchQName{"/TracyCtxSwitchQ"};
+    
+    MSG_Q_ID mTracyMsgQId{MSG_Q_ID_NULL};
+    
+    struct TRACY_CTX_SWITCH_INFO_T
     {
-      uint32_t hi, lo;
-      __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-      *pTS = (static_cast<uint64_t>(hi) << 32) | lo;
-    }
-#  elif (CPU_FAMILY == ARM)
-    const double cTSC_ms = (double)sysTimestamp64Freq() / 1000;
-    const double cTSC_us = (double)sysTimestamp64Freq() / 1000000;
+        uint64_t timestamp;
+        uint32_t prevTaskId;
+        uint32_t nextTaskId;
+        uint8_t cpuIndex;
+        uint8_t reason;
+        uint8_t state;
+    };
 
-    inline void vxTimeBaseGet(uint64_t* pTS)
-    {
-      (void)vxbTimestamp64(pTS);
-    }
-#  else
-#    error "Not supported architecture"
-#  endif
-
-    inline uint64_t readTsc()
-    {
-      uint64_t timebase = 0;
-      vxTimeBaseGet(&timebase);
-      return timebase;
-    }
-
-    /*
-     * WIND_TCB: LP64
-     *
-     * spare1 = current start time for task
-     * spare2 = total execution time for task (since Init was called)
-     * spare3 = total number of task switches (since Init was called)
-     * spare4 = total number of interrupts (since Init was called)
-     *
-     */
-    void SwitchHook(WIND_TCB* pOldTcb, WIND_TCB* pNewTcb)
-    {
-#  ifdef __LP64__
-      int iL = intCpuLock();
-      uint64_t t0 = readTsc();
-      intCpuUnlock(iL);
-
-      printf("SwitchHook:: timestamp:%lu\n", t0);
-
-/* Linux
-      int64_t t0 = std::numeric_limits<int64_t>::max();
-#if defined TRACY_HW_TIMER && (defined __i386 || defined _M_IX86 || defined __x86_64__ || defined _M_X64)
-      t0 = ring.ConvertTimeToTsc(t0);  // all "ring.*" must be replaced, it was used as ring-buffer by perf_event* (linux)
-                                       // XXX
-#endif
-*/
-      uint32_t prev_pid, next_pid, offset;
-      long prev_state;
-
-      /* Linux
-      ring.Read(&prev_pid, offset, sizeof(uint32_t));  // XXX
-      offset += sizeof(uint32_t) + sizeof(uint32_t);
-      ring.Read(&prev_state, offset, sizeof(long));  // XXX
-      offset += sizeof(long) + 16;
-      ring.Read(&next_pid, offset, sizeof(uint32_t));  // XXX
-      */
-
-      /* VxWorks based on WIND_TCB struct
-      RTP_ID currentCtx;    // task's current context
-      RTP_ID rtpId;         // real time process ID
-      RTP_ID rtpWaitId;     // These two members are used for
-      int rtpExitStatus;    // the rtpWait feature.  They hold
-                            // the RTP ID and exit status of
-                            // RTP it is pending on.
-      */
-      prev_pid = static_cast<uint32_t>(pOldTcb->rtpId);
-      next_pid = static_cast<uint32_t>(pNewTcb->rtpId);   // or should be used pNewTcb->rtpWaitId (?)
-
-      uint8_t reason = 100;     // keeping for now
-      uint8_t state;
-
-      /* Linux
-      if (prev_state & 0x0001)
-        state = 104;
-      else if (prev_state & 0x0002)
-        state = 101;
-      else if (prev_state & 0x0004)
-        state = 105;
-      else if (prev_state & 0x0008)
-        state = 106;
-      else if (prev_state & 0x0010)
-        state = 108;
-      else if (prev_state & 0x0020)
-        state = 109;
-      else if (prev_state & 0x0040)
-        state = 110;
-      else if (prev_state & 0x0080)
-        state = 102;
-      else
-        state = 103;
-      */
-
-      /* VxWorks
-      UINT status;    // status of task
-      int priority;   // task's current priority
-      int priNormal;  // normal running priority
-      */
-      state = static_cast<uint8_t>(pNewTcb->status);
-
-      uint8_t cpuIndex;
-
-      TracyLfqPrepare(QueueType::ContextSwitch);
-      MemWrite(&item->contextSwitch.time, t0);
-      MemWrite(&item->contextSwitch.oldThread, prev_pid);
-      MemWrite(&item->contextSwitch.newThread, next_pid);
-
-      /* Linux
-       *  // it sets CPU index when creating the perf_event file for each core
-       *  MemWrite(&item->contextSwitch.cpu, uint8_t(ring.GetCpu()));
-       */
-      MemWrite(&item->contextSwitch.cpu, 0);    // initialize anyway
-      if (pNewTcb->rtpId != 0 && taskIdVerify(pNewTcb->rtpId) == OK)
-      {
-        taskCpuIndexGet(pNewTcb->rtpId, &cpuIndex);
-        if (cpuIndex != -1)
-        {
-          MemWrite(&item->contextSwitch.cpu, static_cast<uint8_t>(cpuIndex));  // unsigned int cpuIndex = vxCpuIndexGet();
-        }
-      }
-
-      MemWrite(&item->contextSwitch.reason, reason);
-      MemWrite(&item->contextSwitch.state, state);
-      TracyLfqCommit;
-#  endif
-    }
+    constexpr size_t cMaxMsgs{20};
+    constexpr int cOptions{0};
+    constexpr int cMode{OM_CREATE | OM_DELETE_ON_LAST_CLOSE};
+    constexpr void* const cContext{nullptr};
 
     bool SysTraceStart(int64_t& samplingPeriod)
     {
-#  ifdef __LP64__
-      /*
-       * should be used taskSwitchHookAdd() and taskSwitchHookDelete() instead of custom sysCall:s
-       *   to monitor context switches
-       * 
-       * https://docs.windriver.com/bundle/hvp_cert_kernel_coreos_24_03/page/CORE/taskSwitchHookLib.html
-       */
-      printf("SysTraceStart:: taskSwitchHookAdd(..)\n");
+      if (!NCP::NcpSystem::CtxSwitchProfileStart())
+      {
+        printf("%s: Failed to start hook for context swith in the kernel\n", __FUNCTION__);
+        return false;
+      }
 
-      taskCpuLock();
-
-      taskSwitchHookAdd((FUNCPTR)SwitchHook);
-
-      taskCpuUnlock();
+      mTracyMsgQId = msgQOpen(cTracyCtxSwitchQName, cMaxMsgs, sizeof(TRACY_CTX_SWITCH_INFO_T), cOptions, cMode, cContext);
+      if (mTracyMsgQId == MSG_Q_ID_NULL)
+      {
+        printf("%s: Failed to open message queue '%s'\n", __FUNCTION__, cTracyCtxSwitchQName);
+        return false;
+      }
 
       return true;
-#  endif
-
-      return false;
     }
 
     void SysTraceStop()
     {
-#  ifdef __LP64__
-      taskCpuLock();
-
-      taskSwitchHookDelete((FUNCPTR)SwitchHook);
-
-      taskCpuUnlock();
-#  endif
+        if (!NCP::NcpSystem::CtxSwitchProfileStop())
+        {
+            printf("SysTraceStop::Error!\n");
+        }
     }
 
     void SysTraceWorker(void* ptr)
     {
       /*
-       * no need of a thread to capture SysTrace details, VxWorks SwitchHook does
-       * monitor and trigger the method to store needed information for tracy
+       * read content from a message queue poupulated by kernel
        */
-      printf("SysTraceWorker:: doing nothing!\n");
+      printf("SysTraceWorker:: SysTraceWorker\n");
+      if (mTracyMsgQId != MSG_Q_ID_NULL)
+      {
+        TRACY_CTX_SWITCH_INFO_T tracyCtxSwitchInfo{};
+    
+        // Clear reply Queue (so we don't read "old" reply msgs)
+        (void)msgQReceive(mTracyMsgQId, reinterpret_cast<char*>(&tracyCtxSwitchInfo), sizeof(tracyCtxSwitchInfo), NO_WAIT);
+
+        printf("%s: Message received from queue '%s'\n", __FUNCTION__, cTracyCtxSwitchQName);
+
+        TracyLfqPrepare(QueueType::ContextSwitch);
+        MemWrite(&item->contextSwitch.time, tracyCtxSwitchInfo.timestamp);
+        MemWrite(&item->contextSwitch.oldThread, tracyCtxSwitchInfo.prevTaskId);
+        MemWrite(&item->contextSwitch.newThread, tracyCtxSwitchInfo.nextTaskId);
+        MemWrite(&item->contextSwitch.cpu, tracyCtxSwitchInfo.cpuIndex);
+        MemWrite(&item->contextSwitch.reason, tracyCtxSwitchInfo.reason);
+        MemWrite(&item->contextSwitch.state, tracyCtxSwitchInfo.state);
+        TracyLfqCommit;
+
+        printf("%s: msgQ content stored in Tracy lock-free queue\n", __FUNCTION__);
+      }
     }
 
     void SysTraceGetExternalName(uint64_t thread, const char*& threadName, const char*& name)

@@ -1599,7 +1599,6 @@ void SysTraceGetExternalName( uint64_t thread, const char*& threadName, const ch
 #  elif defined __VXWORKS__
 // ============================================================================
 // System includes, e.g. STL, Library headers, ...
-#    include <INcpSystem.h>
 #    include <msgQLib.h>
 #    include <taskLib.h>
 #    include <semLib.h>
@@ -1639,7 +1638,11 @@ void SysTraceGetExternalName( uint64_t thread, const char*& threadName, const ch
 
     bool SysTraceStart(int64_t& samplingPeriod)
     {
-      if (!NCP::NcpSystem::CtxSwitchProfileStart())
+      try
+      {
+        Profiler::CtxSwitchProfileStart();
+      }
+      catch (const std::runtime_error& e)
       {
         printf("%s: Failed to start hook for context swith in the kernel\n", __FUNCTION__);
         return false;
@@ -1657,10 +1660,14 @@ void SysTraceGetExternalName( uint64_t thread, const char*& threadName, const ch
 
     void SysTraceStop()
     {
-        if (!NCP::NcpSystem::CtxSwitchProfileStop())
-        {
-            printf("SysTraceStop::Error!\n");
-        }
+      try
+      {
+        Profiler::CtxSwitchProfileStart();
+      }
+      catch (const std::runtime_error& e)
+      {
+        printf("SysTraceStop::Error!\n");
+      }
     }
 
     void SysTraceWorker(void* ptr)
